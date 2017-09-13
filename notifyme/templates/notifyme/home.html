@@ -3,7 +3,8 @@
 {% block main %}
 <h1>Home</h1>
 
-<button id="notify-me">Notify Me!</button>
+<button id="notify-api">Notify API!</button>
+<button id="notify-ws">Notify WS!</button>
 <pre class="notifications">
 {% for notification in notifications %}{{notification.created|date:"c"}}: {{notification.message}}
 {% endfor %}
@@ -13,6 +14,38 @@
  <script>
 if(!"{{user.username}}")
   window.location = "/admin/login/?next=/";
+
+// using jQuery
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+
 $(function () {
   var ws_path = "/stream/";
   console.log("Connecting to " + ws_path);
@@ -29,9 +62,17 @@ $(function () {
       console.log('Error: '+payload.response_status);
     }
   });
-  $('#notify-me').click(function(){
+  $('#notify-api').click(function(){
+    var data = {
+        "message":"Notification Clicked by {{request.user.username}} using API!",
+    }
+    var jqxhr = $.post( "/api/notifications/", data, function(response) {
+      console.log(response);
+    })
+  });
+  $('#notify-ws').click(function(){
     webSocketBridge.stream('notification').send({
-      "data":{"message": "Notification Clicked by {{request.user.username}}!","user":{{request.user.id}}},
+      "data":{"message": "Notification Clicked by {{request.user.username}} using WS!","user":{{request.user.id}}},
       "action":"create",
     });
   });

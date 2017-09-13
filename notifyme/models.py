@@ -1,6 +1,10 @@
 from django.db import models
+from channels import Group
 from accounts.models import UserProfile
-from django.utils import timezone
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+
+import json
 
 class Notification(models.Model):
     """
@@ -16,12 +20,4 @@ class Notification(models.Model):
     class Meta:
         ordering = ('-created',)
 
-    
-    """
-    def save(self, *args, **kwargs):
-        print('Saving...')
-        if not self.created and not self.pk:
-            self.created = timezone.now()
-        super(Notification, self).save(*args, **kwargs)
-    """
 
