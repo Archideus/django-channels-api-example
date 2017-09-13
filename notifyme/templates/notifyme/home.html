@@ -1,0 +1,49 @@
+{% extends 'notifyme/base.html' %}
+
+{% block main %}
+<h1>Home</h1>
+
+<button id="notify-me">Notify Me!</button>
+<pre class="notifications">
+{% for notification in notifications %}{{notification.created|date:"c"}}: {{notification.message}}
+{% endfor %}
+</pre>
+
+
+ <script>
+if(!"{{user.username}}")
+  window.location = "/admin/login/?next=/";
+$(function () {
+  var ws_path = "/stream/";
+  console.log("Connecting to " + ws_path);
+
+  var webSocketBridge = new channels.WebSocketBridge();
+  webSocketBridge.connect(ws_path);
+  webSocketBridge.listen(function(data){
+    console.log(data);
+  });
+  webSocketBridge.demultiplex('notification', function(payload, streamName){
+    if(payload.data){
+      $('.notifications').prepend(payload.data.created+': '+payload.data.message+'\n');
+    }else{
+      console.log('Error: '+payload.response_status);
+    }
+  });
+  $('#notify-me').click(function(){
+    webSocketBridge.stream('notification').send({
+      "data":{"message": "Notification Clicked by {{request.user.username}}!","user":{{request.user.id}}},
+      "action":"create",
+    });
+  });
+  webSocketBridge.socket.onopen = function () {
+    console.log("Connected to chat socket");
+  };
+  webSocketBridge.socket.onclose = function () {
+    console.log("Disconnected from chat socket");
+  }
+  console.log(webSocketBridge);
+});
+</script>
+
+
+{% endblock %}
