@@ -1,0 +1,17 @@
+# Backups
+*.json
+*.tar.gz
+
+# Media
+media/
+
+# Sass
+**/.sass-cache
+**/.sass-cache/*
+**.sass-cache**
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
